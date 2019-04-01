@@ -39,39 +39,61 @@ int main( int argc, char* argv[] )
         DepthMetaData depthData;
         mDepthGen.GetMetaData( depthData );
         Mat imgDepth( depthData.FullYRes(), depthData.FullXRes(), CV_16UC1, ( void* )depthData.Data() );
+		Mat imgDepthScaled(depthData.FullYRes(), depthData.FullXRes(), CV_16UC1);
         Mat img8bitDepth;
 
         for(unsigned int i = 0; i < depthData.FullYRes(); i++)
         {
             uint16_t * row = imgDepth.ptr<uint16_t>(i);
+			uint16_t * rowScaled = imgDepthScaled.ptr<uint16_t>(i);
 			for(unsigned int j = 0; j < depthData.FullXRes(); j++)
             {
                 uint16_t* pixel = &row[j];
+				uint16_t* pixelScaled = &rowScaled[j];
 
                 if (*pixel > max_dist) {
-                    *pixel = max_dist;
+					*pixelScaled = max_dist;
                 }
                 else if (*pixel < min_dist && *pixel > 0) {
-                    *pixel = min_dist;
+					*pixelScaled = min_dist;
                 }
                 else if (*pixel == 0)
                 {
-                    *pixel = max_dist;
+					*pixelScaled = max_dist;
                 }
+				else *pixelScaled = *pixel;
+
                 if(reverse_colormap){
-                    *pixel = 65535 - (*pixel-min_dist)*(int)(65535/(max_dist-min_dist));
+					*pixelScaled = 65535 - (*pixelScaled - min_dist)*(int)(65535 / (max_dist - min_dist));
                 }
-                else *pixel = (*pixel-min_dist)*(int)(65535/(max_dist-min_dist));
-                pixel++;
+				else *pixelScaled = (*pixelScaled - min_dist)*(int)(65535 / (max_dist - min_dist));
             }
         }
 
         // Convert 16bit to 8bit greyscale
-        imgDepth.convertTo( img8bitDepth, CV_8UC1, 1.0 / 257.0);         
+        imgDepthScaled.convertTo( img8bitDepth, CV_8UC1, 1.0 / 257.0);         
 
         // Apply color map to 8bit frame
         Mat rgb(60, 80, CV_8UC3);
         applyColorMap(img8bitDepth, rgb, COLORMAP_JET);
+
+		// Set invalid pixel to black for any colormap
+		for (int i = 0; i < depthData.FullYRes(); i++) {
+			uint16_t * row = imgDepth.ptr<uint16_t>(i);
+			for (int j = 0; j < depthData.FullXRes(); j++) {
+				uint16_t* pixel = &row[j];
+				if (*pixel == 0)
+				{
+					Vec3b color = rgb.at<Vec3b>(Point(j, i));
+					color[0] = 0;
+					color[1] = 0;
+					color[2] = 0;
+					rgb.at<Vec3b>(Point(j, i)) = color;
+				}
+			}
+		}
+
+		//Display image
         cv::resize(rgb, rgb, cv::Size(640, 480), CV_INTER_LINEAR);
         namedWindow( "Depth View", CV_WINDOW_NORMAL);
         imshow( "Depth View", rgb);

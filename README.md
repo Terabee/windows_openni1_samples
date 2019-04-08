@@ -21,7 +21,7 @@ The visual studio project provided in this repository is designed to work with V
 
 ### Install Terabee 3D depth camera SDK
 
-* Download the Windows SDK from the Downloads section of Terabee 3Dcam [here](https://www.terabee.com/wp-content/uploads/2019/04/Terabee_3Dcam_SDK_1.5.0.1_Windows.zip).
+* Download the Windows SDK from the Downloads section of Terabee 3Dcam [here](https://www.terabee.com/shop/3d-tof-cameras/terabee-3dcam/).
 * Install the SDK by running the file relevant to your system architecture and desired OpenNI version.
 
 ## Start developing your application
